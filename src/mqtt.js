@@ -271,6 +271,27 @@ const client = mqtt.connect(mqttBrokerUrl, {
     username: mqttUsername,
     password: mqttPassword,
     clientId: mqttClientId,
+    keepalive: 60,
+    reconnectPeriod: 5000,
+    connectTimeout: 30000,
+    clean: true,
+});
+
+// add connection logging
+client.on("connect", () => {
+    console.log(`Connected to MQTT broker: ${mqttBrokerUrl}`);
+});
+
+client.on("error", (err) => {
+    console.error("MQTT connection error:", err);
+});
+
+client.on("close", () => {
+    console.log("MQTT connection closed");
+});
+
+client.on("reconnect", () => {
+    console.log("MQTT reconnecting...");
 });
 
 // load protobufs
@@ -709,11 +730,22 @@ function convertHexIdToNumericId(hexId) {
 client.on("connect", () => {
     for(const mqttTopic of mqttTopics){
         client.subscribe(mqttTopic);
+        console.log(`Subscribed to topic: ${mqttTopic}`);
     }
 });
 
+// add message counter
+let messageCount = 0;
+setInterval(() => {
+    if (messageCount > 0) {
+        console.log(`Received ${messageCount} messages in the last minute`);
+        messageCount = 0;
+    }
+}, 60000);
+
 // handle message received
 client.on("message", async (topic, message) => {
+    messageCount++;
     try {
 
         // decode service envelope
@@ -971,7 +1003,15 @@ client.on("message", async (topic, message) => {
                     },
                 });
             } catch (e) {
-                console.error(e);
+                // Suppress harmless concurrency errors (MySQL 1020, Prisma P2002)
+                if (
+                    (e.code === 'P2002' && e.meta && e.meta.target === 'nodes_node_id_key') ||
+                    (e.message && e.message.includes("Record has changed since last read"))
+                ) {
+                    // Do nothing
+                } else {
+                    console.error(e);
+                }
             }
 
         }
@@ -1337,7 +1377,15 @@ client.on("message", async (topic, message) => {
                 });
 
             } catch (e) {
-                console.error(e);
+                // Suppress harmless concurrency errors (MySQL 1020, Prisma P2002)
+                if (
+                    (e.code === 'P2002' && e.meta && e.meta.target === 'nodes_node_id_key') ||
+                    (e.message && e.message.includes("Record has changed since last read"))
+                ) {
+                    // Do nothing
+                } else {
+                    console.error(e);
+                }
             }
 
             // don't collect map report history if not enabled, but we still want to update the node above
