@@ -37,8 +37,8 @@ services:
     ports:
       - 3306:3306/tcp
     environment:
-      MARIADB_DATABASE: "meshtastic-map"
-      MARIADB_ROOT_PASSWORD: "password"
+      MARIADB_DATABASE: "${MARIADB_DATABASE}"
+      MARIADB_ROOT_PASSWORD: "${MARIADB_ROOT_PASSWORD}"
     volumes:
       - database_data:/bitnami/mariadb
     healthcheck:
