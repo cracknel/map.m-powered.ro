@@ -11,8 +11,8 @@ services:
       dockerfile: ./Dockerfile
     command: /app/docker/mqtt.sh
     environment:
-      DATABASE_URL: "mysql://root:password@database:3306/meshtastic-map?connection_limit=100"
-      MQTT_OPTS: "" # add any custom mqtt.js options here
+      DATABASE_URL: "${DATABASE_URL}"
+      MQTT_OPTS: "--mqtt-broker-url ${MQTT_BROKER_URL} --mqtt-username ${MQTT_USERNAME} --mqtt-password ${MQTT_PASSWORD} --collect-service-envelopes --collect-positions --collect-text-messages --collect-waypoints --collect-neighbour-info --collect-map-reports --ignore-direct-messages --drop-packets-not-ok-to-mqtt --purge-nodes-unheard-for-seconds 604800 --purge-device-metrics-after-seconds 604800 --purge-environment-metrics-after-seconds 604800 --purge-map-reports-after-seconds 604800 --purge-neighbour-infos-after-seconds 604800 --purge-power-metrics-after-seconds 604800 --purge-positions-after-seconds 604800 --purge-service-envelopes-after-seconds 604800 --purge-text-messages-after-seconds 604800 --purge-traceroutes-after-seconds 604800 --purge-waypoints-after-seconds 604800 --purge-interval-seconds 1800 --old-firmware-position-precision 2"
 
   # runs the web map ui
   meshtastic-map:
@@ -27,7 +27,7 @@ services:
     ports:
       - 8080:8080/tcp
     environment:
-      DATABASE_URL: "mysql://root:password@database:3306/meshtastic-map?connection_limit=100"
+      DATABASE_URL: "${DATABASE_URL}"
       MAP_OPTS: "" # add any custom index.js options here
 
   # runs the database to store everything from mqtt
@@ -46,7 +46,6 @@ services:
       interval: 15s
       timeout: 5s
       retries: 6
-      start_interval: 5s
 
 volumes:
   database_data:
